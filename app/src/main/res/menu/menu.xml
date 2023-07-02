@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- "Mark Favorite", should appear as action button if possible -->
+    <item
+        android:id="@+id/bt_connect"
+        android:icon="@android:drawable/stat_sys_data_bluetooth"
+        android:title="btc"
+        app:showAsAction="always" />
+
+    <!-- Settings, should always be in the overflow -->
+    <item
+        android:id="@+id/menu_entry"
+        android:icon="@android:drawable/stat_sys_data_bluetooth"
+        android:title="entry"
+        android:visible="true"
+        app:showAsAction="never" />
+
+</menu>
