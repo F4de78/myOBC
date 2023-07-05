@@ -28,7 +28,6 @@ class MainActivity : AppCompatActivity() {
         // as you specify a parent activity in AndroidManifest.xml.
         when (item.itemId) {
             R.id.menu_entry ->{
-                //Toast.makeText(applicationContext,"entry",Toast.LENGTH_LONG).show()
                 startActivity(Intent(this@MainActivity, BluetoothActivity::class.java))
                 return true
             }
