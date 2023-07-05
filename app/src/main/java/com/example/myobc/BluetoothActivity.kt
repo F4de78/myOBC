@@ -5,24 +5,27 @@ import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothSocket
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
+import android.widget.AdapterView.OnItemClickListener
 import android.widget.ArrayAdapter
-import android.widget.Button
 import android.widget.ListView
 import android.widget.Toast
+import java.util.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import java.io.IOException
 
 
 class BluetoothActivity : AppCompatActivity() {
@@ -44,6 +47,8 @@ class BluetoothActivity : AppCompatActivity() {
         private val BLUETOOTH_CONNECTION_CODE = 1005
     }
 
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_bluetooth)
@@ -64,6 +69,8 @@ class BluetoothActivity : AppCompatActivity() {
             requestEnableBluetooth.launch(enableBtIntent)
         } else {
             // Bluetooth is enabled, start scanning for devices
+            //already saved devices
+            savedDevices()
             startScanning()
         }
 
@@ -79,7 +86,21 @@ class BluetoothActivity : AppCompatActivity() {
                 REQUEST_PERMISSION_ACCESS_FINE_LOCATION
             )
         }
+
+
+
+        devicesListView.onItemClickListener = OnItemClickListener { parent, view , position, id ->
+            val address = discoveredDevices.elementAt(id.toInt()).address
+
+            val device: BluetoothDevice = bluetoothAdapter.getRemoteDevice(address)
+            ConnectBluetoothTask(device,bluetoothAdapter).start()
+        }
+
+
     }
+
+
+
 
 
     override fun onDestroy() {
@@ -144,5 +165,20 @@ class BluetoothActivity : AppCompatActivity() {
 
         bluetoothLeScanner.startScan(null, scanSettings, scanCallback)
     }
+
+    private fun savedDevices(){
+        val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter?.bondedDevices
+        pairedDevices?.forEach { device ->
+            if (!discoveredDevices.contains(device)) {
+                devicesArrayAdapter.add("${device.name} (${device.address})")
+            }
+        }
+
+    }
+
+
+
+
+
 
 }
