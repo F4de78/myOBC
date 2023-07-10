@@ -86,17 +86,35 @@ class MainActivity : AppCompatActivity() {
                 }
                 if (connected) {
                     connection_status.text = "Connected to ECU."
-                    while (true) {
-                        bluetoothClient.askRPM()
-                        val data = withContext(Dispatchers.Default) {
-                            bluetoothClient.readRPM()
-                        }
-                        Log.d("Bluetooth", "Received data: $data")
-                        RPM_display.text = data
-                        delay(1000)
+                    launch{
+                        speed()
                     }
                 }
             }
+        }
+    }
+
+    private suspend fun RPM(){
+        while (true) {
+            val data = withContext(Dispatchers.Default) {
+                bluetoothClient.askRPM()
+                //bluetoothClient.readRPM()
+            }
+            Log.d("Bluetooth", "Received data: $data")
+            RPM_display.text = data
+            delay(1000)
+        }
+    }
+
+    private suspend fun speed(){
+        while (true) {
+            val data = withContext(Dispatchers.Default) {
+                bluetoothClient.askSpeed()
+                //bluetoothClient.readRPM()
+            }
+            Log.d("Bluetooth", "Received data: $data")
+            speed_display.text = data
+            delay(1000)
         }
     }
 

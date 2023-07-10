@@ -78,24 +78,50 @@ class BluetoothClient(private val device: BluetoothDevice) {
             false
         }
     }
-    suspend fun askRPM() {
+    suspend fun askRPM(): String {
+        var resposne: String = "error"
         withTimeoutOrNull(5000) {
             withContext(Dispatchers.IO) {
                 val writer = BufferedWriter(OutputStreamWriter(outputStream))
 
                 try {
-                    val response: ObdResponse = obdConnection.run(RPMCommand(), delayTime = 500)
+                    val aux: ObdResponse = obdConnection.run(RPMCommand(), delayTime = 500)
                     //writer.flush()
-                    writer.write(response.value)
-                    writer.newLine()
+                    //writer.write("ciao")
+                    //writer.newLine()
+                    Log.e("obd value",aux.value)
+                    resposne = aux.value
 
-                    Log.e("obd value",response.value)
                 } catch (e: NoDataException) {
                     e.printStackTrace()
                 }
             }
 
         }
+        return resposne
+    }
+
+    suspend fun askSpeed(): String {
+        var resposne: String = "error"
+        withTimeoutOrNull(5000) {
+            withContext(Dispatchers.IO) {
+                val writer = BufferedWriter(OutputStreamWriter(outputStream))
+
+                try {
+                    val aux: ObdResponse = obdConnection.run(SpeedCommand(), delayTime = 500)
+                    //writer.flush()
+                    //writer.write("ciao")
+                    //writer.newLine()
+                    Log.e("obd value",aux.value)
+                    resposne = aux.value
+
+                } catch (e: NoDataException) {
+                    e.printStackTrace()
+                }
+            }
+
+        }
+        return resposne
     }
 
     suspend fun readRPM(): String {
@@ -125,7 +151,7 @@ class BluetoothClient(private val device: BluetoothDevice) {
     }
 
 
-    suspend fun askSpeed() = withContext(Dispatchers.IO) {
+    /*suspend fun askSpeed() = withContext(Dispatchers.IO) {
         try {
             val response = obdConnection.run(SpeedCommand(), delayTime = 500L)
             Log.e("OBD raw response", response.rawResponse.toString())
@@ -155,7 +181,7 @@ class BluetoothClient(private val device: BluetoothDevice) {
             // Handle data reading error
             e.printStackTrace()
         }
-    }
+    }*/
 
 
     suspend fun disconnect() = withContext(Dispatchers.IO) {
