@@ -78,51 +78,41 @@ class BluetoothClient(private val device: BluetoothDevice) {
             false
         }
     }
-    suspend fun askRPM(): String {
-        var resposne: String = "error"
-        withTimeoutOrNull(5000) {
-            withContext(Dispatchers.IO) {
-                val writer = BufferedWriter(OutputStreamWriter(outputStream))
 
-                try {
-                    val aux: ObdResponse = obdConnection.run(RPMCommand(), delayTime = 500)
-                    //writer.flush()
-                    //writer.write("ciao")
-                    //writer.newLine()
-                    Log.e("obd value",aux.value)
-                    resposne = aux.value
 
-                } catch (e: NoDataException) {
-                    e.printStackTrace()
-                }
+
+
+    suspend fun askRPM(outputStreamRPM: OutputStream)= withTimeoutOrNull(5000) {
+        withContext(Dispatchers.IO) {
+
+            try {
+                val aux: ObdResponse = obdConnection.run(RPMCommand(), delayTime = 500)
+                outputStreamRPM.write(aux.formattedValue.toByteArray())
+                outputStreamRPM.flush()
+            } catch (e: NoDataException) {
+                e.printStackTrace()
+                "error"
+            } finally {
+                //outputStreamRPM.close()
             }
-
         }
-        return resposne
-    }
+    } ?: "error"
 
-    suspend fun askSpeed(): String {
-        var resposne: String = "error"
-        withTimeoutOrNull(5000) {
-            withContext(Dispatchers.IO) {
-                val writer = BufferedWriter(OutputStreamWriter(outputStream))
+    suspend fun askSpeed(outputStreamSpeed: OutputStream)= withTimeoutOrNull(5000) {
+        withContext(Dispatchers.IO) {
 
-                try {
-                    val aux: ObdResponse = obdConnection.run(SpeedCommand(), delayTime = 500)
-                    //writer.flush()
-                    //writer.write("ciao")
-                    //writer.newLine()
-                    Log.e("obd value",aux.value)
-                    resposne = aux.value
-
-                } catch (e: NoDataException) {
-                    e.printStackTrace()
-                }
+            try {
+                val aux: ObdResponse = obdConnection.run(SpeedCommand(), delayTime = 500)
+                outputStreamSpeed.write(aux.value.toByteArray())
+                outputStreamSpeed.flush()
+            } catch (e: NoDataException) {
+                e.printStackTrace()
+                "error"
+            } finally {
+                //outputStreamSpeed.close()
             }
-
         }
-        return resposne
-    }
+    } ?: "error"
 
     suspend fun readRPM(): String {
         return withTimeout(5000) {

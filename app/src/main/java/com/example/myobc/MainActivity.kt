@@ -8,16 +8,18 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.BufferedInputStream
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 
 
 class MainActivity : AppCompatActivity() {
@@ -86,9 +88,14 @@ class MainActivity : AppCompatActivity() {
                 }
                 if (connected) {
                     connection_status.text = "Connected to ECU."
-                    launch{
-                        speed()
-                    }
+
+                    val rpmJob = async { RPM() }
+                    val speedJob = async { speed() }
+
+                    rpmJob.await()
+                    speedJob.await()
+
+
                 }
             }
         }
@@ -96,25 +103,44 @@ class MainActivity : AppCompatActivity() {
 
     private suspend fun RPM(){
         while (true) {
-            val data = withContext(Dispatchers.Default) {
-                bluetoothClient.askRPM()
+            val outputStreamRPM = ByteArrayOutputStream();
+            withContext(Dispatchers.Default) {
+                bluetoothClient.askRPM(outputStreamRPM)
                 //bluetoothClient.readRPM()
             }
-            Log.d("Bluetooth", "Received data: $data")
-            RPM_display.text = data
-            delay(1000)
+            val inputStreamRPM = ByteArrayInputStream(outputStreamRPM.toByteArray())
+            val bufferedStream = BufferedInputStream(inputStreamRPM)
+            var resultString: String
+            withContext(Dispatchers.IO) {
+                resultString = bufferedStream.bufferedReader().use { it.readText() }
+
+            }
+            inputStreamRPM.close()
+            outputStreamRPM.close()
+            RPM_display.text = resultString
+            delay(0)
         }
     }
 
     private suspend fun speed(){
         while (true) {
+            val outputStreamRPM = ByteArrayOutputStream();
             val data = withContext(Dispatchers.Default) {
-                bluetoothClient.askSpeed()
+                bluetoothClient.askSpeed(outputStreamRPM)
                 //bluetoothClient.readRPM()
             }
-            Log.d("Bluetooth", "Received data: $data")
-            speed_display.text = data
-            delay(1000)
+            val inputStreamSpeed = ByteArrayInputStream(outputStreamRPM.toByteArray())
+            //val inputBytes = ByteArray(inputStreamRPM.available())
+            var resultString: String
+            withContext(Dispatchers.IO) {
+                resultString= inputStreamSpeed.bufferedReader().use { it.readText() }
+
+            }
+            inputStreamSpeed.close()
+            outputStreamRPM.close()
+            speed_display.text = ""
+            speed_display.text = resultString
+            delay(500)
         }
     }
 
