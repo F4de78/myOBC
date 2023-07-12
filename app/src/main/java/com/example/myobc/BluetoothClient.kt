@@ -15,6 +15,11 @@ import com.github.eltonvs.obd.command.at.SetSpacesCommand
 import com.github.eltonvs.obd.command.at.SetTimeoutCommand
 import com.github.eltonvs.obd.command.engine.RPMCommand
 import com.github.eltonvs.obd.command.engine.SpeedCommand
+import com.github.eltonvs.obd.command.pressure.IntakeManifoldPressureCommand
+import com.github.eltonvs.obd.command.temperature.AirIntakeTemperatureCommand
+import com.github.eltonvs.obd.command.temperature.AmbientAirTemperatureCommand
+import com.github.eltonvs.obd.command.temperature.EngineCoolantTemperatureCommand
+import com.github.eltonvs.obd.command.temperature.OilTemperatureCommand
 import com.github.eltonvs.obd.connection.ObdDeviceConnection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -56,7 +61,8 @@ class BluetoothClient(private val device: BluetoothDevice) {
             inputStream = bluetoothSocket.inputStream
             outputStream = bluetoothSocket.outputStream
             obdConnection = ObdDeviceConnection(inputStream, outputStream)
-            //should init obd device sending AT commands
+            //initialize OBD adapter sending AT command
+            //TODO: should init ELM like Torque/OBDAutodoc
             //https://stackoverflow.com/questions/13764442/initialization-of-obd-adapter
             obdConnection.run(ResetAdapterCommand(), delayTime = 1000)
             obdConnection.run(SetEchoCommand(Switcher.OFF), delayTime = 500)
@@ -65,10 +71,6 @@ class BluetoothClient(private val device: BluetoothDevice) {
             obdConnection.run(SetTimeoutCommand(500), delayTime = 500)
             obdConnection.run(HeadersCommand(Switcher.OFF), delayTime = 500)
             obdConnection.run(SelectProtocolCommand(ObdProtocols.AUTO), delayTime = 500)
-
-
-            //obdConnection.run(SetBaudRateCommand(38400))
-
 
             Log.e("OBD connection", "OBD connection established")
             true
@@ -79,100 +81,94 @@ class BluetoothClient(private val device: BluetoothDevice) {
         }
     }
 
-
-
-
-    suspend fun askRPM(outputStreamRPM: OutputStream)= withTimeoutOrNull(5000) {
-        withContext(Dispatchers.IO) {
-
-            try {
-                val aux: ObdResponse = obdConnection.run(RPMCommand(), delayTime = 500)
-                outputStreamRPM.write(aux.formattedValue.toByteArray())
-                outputStreamRPM.flush()
-            } catch (e: NoDataException) {
-                e.printStackTrace()
-                "error"
-            } finally {
-                //outputStreamRPM.close()
-            }
-        }
-    } ?: "error"
-
-    suspend fun askSpeed(outputStreamSpeed: OutputStream)= withTimeoutOrNull(5000) {
-        withContext(Dispatchers.IO) {
-
-            try {
-                val aux: ObdResponse = obdConnection.run(SpeedCommand(), delayTime = 500)
-                outputStreamSpeed.write(aux.value.toByteArray())
-                outputStreamSpeed.flush()
-            } catch (e: NoDataException) {
-                e.printStackTrace()
-                "error"
-            } finally {
-                //outputStreamSpeed.close()
-            }
-        }
-    } ?: "error"
-
-    suspend fun readRPM(): String {
-        return withTimeout(5000) {
-             val buffer = ByteArray(512)
-             val data = StringBuilder()
-             try {
-                 withContext(Dispatchers.IO) {
-                     while (inputStream.available() > 0) {
-                         val bytesRead = inputStream.read(buffer)
-                         Log.e("buffer",buffer.toString())
-                         if (bytesRead > 0) {
-                             data.append(String(buffer, 0, bytesRead))
-                         }
-                     }
-                 }
-                 if (data.isNotEmpty()) {
-                     return@withTimeout data.toString()
-                 } else {
-                     return@withTimeout "empty"
-                 }
-             } catch (e: IOException) {
-                 e.printStackTrace()
-                 "input error"
-             }
-         } ?: "timeout"
-    }
-
-
-    /*suspend fun askSpeed() = withContext(Dispatchers.IO) {
+    suspend fun askRPM(outputStream: OutputStream)= withTimeoutOrNull(5000) {
         try {
-            val response = obdConnection.run(SpeedCommand(), delayTime = 500L)
-            Log.e("OBD raw response", response.rawResponse.toString())
-            Log.e("OBD formatted", response.value)
-            outputStream.write(response.value.toByteArray())
-        } catch (e: Exception) {
-            // Handle data sending error
+            //using custom command (RPMCommandFix() )because the one in the library fails
+            val aux: ObdResponse = obdConnection.run(RPMCommandFix(), delayTime = 500)
+            Log.d("RPM value", aux.value)
+            outputStream.write(aux.value.toByteArray())
+            outputStream.flush()
+        } catch (e: NoDataException) {
             e.printStackTrace()
+        } finally {
+            outputStream.close()
         }
     }
 
-    suspend fun readSpeed(callback: (String) -> Unit) = withContext(Dispatchers.IO) {
-        val buffer = ByteArray(1024)
-        var bytesRead: Int
-        val data = StringBuilder()
+    suspend fun askSpeed(outputStream: OutputStream)= withTimeoutOrNull(5000) {
         try {
-
-            bytesRead = inputStream.read(buffer) ?: 0
-            if (bytesRead > 0) {
-                data.append(String(buffer, 0, bytesRead))
-                withContext(Dispatchers.Main) {
-                    callback(data.toString())
-                }
-            }
-
-        } catch (e: IOException) {
-            // Handle data reading error
+            val aux: ObdResponse = obdConnection.run(SpeedCommand(), delayTime = 500)
+            outputStream.write(aux.value.toByteArray())
+            outputStream.flush()
+        } catch (e: NoDataException) {
+            outputStream.write("!DATA".toByteArray())
             e.printStackTrace()
+        } finally {
+            outputStream.close()
         }
-    }*/
+    }
 
+    suspend fun askCoolantTemp(outputStream: OutputStream)= withTimeoutOrNull(5000) {
+        try {
+            val aux: ObdResponse =
+                obdConnection.run(EngineCoolantTemperatureCommand(), delayTime = 500)
+            outputStream.write(aux.value.toByteArray())
+            outputStream.flush()
+        } catch (e: NoDataException) {
+            outputStream.write("!DATA".toByteArray())
+            e.printStackTrace()
+        } finally {
+            outputStream.close()
+        }
+    }
+
+    suspend fun askOilTemp(outputStream: OutputStream)= withTimeoutOrNull(5000) {
+        try {
+            val aux: ObdResponse =
+                obdConnection.run(OilTemperatureCommand(), delayTime = 500)
+            Log.e("oil response",aux.value)
+
+            outputStream.write(aux.value.toByteArray())
+            outputStream.flush()
+
+        } catch (e: NoDataException) {
+            outputStream.write("!DATA".toByteArray())
+            e.printStackTrace()
+        } finally {
+            outputStream.close()
+        }
+    }
+
+    suspend fun askIntakeTemp(outputStream: OutputStream)= withTimeoutOrNull(5000) {
+        try {
+            val aux: ObdResponse =
+                obdConnection.run(AirIntakeTemperatureCommand(), delayTime = 500)
+
+            outputStream.write(aux.value.toByteArray())
+            outputStream.flush()
+        } catch (e: NoDataException) {
+            outputStream.write("!DATA".toByteArray())
+            e.printStackTrace()
+        } finally {
+            outputStream.close()
+        }
+    }
+
+    suspend fun askAmbientTemp(outputStream: OutputStream)= withTimeoutOrNull(5000) {
+        try {
+            val aux: ObdResponse =
+                obdConnection.run(AmbientAirTemperatureCommand(), delayTime = 500)
+            Log.e("ambient", aux.value)
+
+            outputStream.write(aux.value.toByteArray())
+            outputStream.flush()
+        } catch (e: NoDataException) {
+            outputStream.write("!DATA".toByteArray())
+            e.printStackTrace()
+        } finally {
+            outputStream.close()
+        }
+    }
 
     suspend fun disconnect() = withContext(Dispatchers.IO) {
         try {

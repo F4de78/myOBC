@@ -46,14 +46,6 @@ class BluetoothActivity : AppCompatActivity() {
         // Set result CANCELED in case the user backs out
         setResult(RESULT_CANCELED)
 
-        // Initialize array adapters. One for already paired devices and
-        // one for newly discovered devices
-
-        // Initialize array adapters. One for already paired devices and
-        // one for newly discovered devices
-
-        // Initialize array adapters. One for already paired devices and
-        // one for newly discovered devices
         val pairedDevicesArrayAdapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1)
         mNewDevicesArrayAdapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1)
 
@@ -63,7 +55,6 @@ class BluetoothActivity : AppCompatActivity() {
         pairedListView.adapter = pairedDevicesArrayAdapter
         pairedListView.onItemClickListener = mDeviceClickListener
 
-        // Find and set up the ListView for newly discovered devices
 
         // Find and set up the ListView for newly discovered devices
         val newDevicesListView = findViewById<ListView>(R.id.bt_list_paired)
