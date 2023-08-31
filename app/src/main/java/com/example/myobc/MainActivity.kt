@@ -26,7 +26,7 @@ import java.io.ByteArrayOutputStream
 
 
 class MainActivity : AppCompatActivity() {
-    /*displays an gauges*/
+    /*displays gauges*/
     private lateinit var connection_status: TextView
     private lateinit var speed_display: TextView
     private lateinit var RPM_display: TextView
@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity() {
 
     private var address: String = ""
 
-    private lateinit var mBluetoothAdapter: BluetoothAdapter
+    private var mBluetoothAdapter: BluetoothAdapter? = null
 
     private lateinit var bluetoothClient: BluetoothClient
 
@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity() {
             // Get the BluetoothDevice object
             mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
             //get bluetooth device
-            val device: BluetoothDevice = mBluetoothAdapter.getRemoteDevice(address)
+            val device: BluetoothDevice = mBluetoothAdapter!!.getRemoteDevice(address)
             bluetoothClient = BluetoothClient(device)
             connection_status.text = "Connected to $address, connecting to ECU..."
 
@@ -226,7 +226,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        mBluetoothAdapter.cancelDiscovery()
+        //mBluetoothAdapter.cancelDiscovery()
     }
 
 

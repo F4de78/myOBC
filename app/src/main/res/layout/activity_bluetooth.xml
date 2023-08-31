@@ -6,33 +6,144 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ListView
-        android:id="@+id/bt_list"
-        android:layout_width="377dp"
-        android:layout_height="312dp"
+    <TextView
+        android:id="@+id/bt_discovered2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="16dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:contextClickable="false"
+        android:elegantTextHeight="true"
+        android:fontFamily="monospace"
+        android:text="Paired devices"
+        android:textAlignment="inherit"
+        android:textAllCaps="false"
+        android:textColor="#FFB300"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toTopOf="@+id/bt_list_p"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-    </ListView>
+        app:layout_constraintTop_toBottomOf="@+id/bt_title" />
 
     <ListView
-        android:id="@+id/bt_list_paired"
-        android:layout_width="375dp"
-        android:layout_height="347dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="22dp"
+        android:id="@+id/bt_list_p"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="26dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/bt_discovered"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/bt_list"
+        app:layout_constraintTop_toBottomOf="@+id/bt_title" />
+
+    <ListView
+        android:id="@+id/bt_list_d"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/bt_start"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/bt_discovered" />
+
+    <TextView
+        android:id="@+id/bt_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="13dp"
+        android:layout_marginBottom="8dp"
+        android:contextClickable="false"
+        android:elegantTextHeight="true"
+        android:fontFamily="monospace"
+        android:text="Select a Bluetooth OBD interface"
+        android:textAlignment="inherit"
+        android:textAllCaps="false"
+        android:textColor="#FFB300"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/bt_list_p"
+        app:layout_constraintEnd_toStartOf="@+id/spinner"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/bt_discovered"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
+        android:contextClickable="false"
+        android:elegantTextHeight="true"
+        android:fontFamily="monospace"
+        android:text="Discovered devices"
+        android:textAlignment="inherit"
+        android:textAllCaps="false"
+        android:textColor="#FFB300"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toTopOf="@+id/bt_list_d"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/bt_list_p" />
+
+    <ProgressBar
+        android:id="@+id/spinner"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="13dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/bt_list_p"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/bt_title"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/bt_start"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="8dp"
+        android:text="Start search"
+        android:textColor="#43A047"
+        android:textStyle="bold"
+        android:typeface="monospace"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/bt_stop"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/bt_list_d" />
+
+    <Button
+        android:id="@+id/bt_stop"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
+        android:text="Stop search"
+        android:textColor="#E53935"
+        android:textStyle="bold"
+        android:typeface="monospace"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/bt_start"
+        app:layout_constraintTop_toBottomOf="@+id/bt_list_d"
+        app:layout_constraintVertical_bias="0.6" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

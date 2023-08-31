@@ -7,9 +7,9 @@
 
     <!-- Settings, should always be in the overflow -->
     <item
-        android:id="@+id/menu_entry"
-        android:icon="@android:drawable/stat_sys_data_bluetooth"
-        android:title="entry"
+        android:id="@+id/rec"
+        android:icon="@android:drawable/ic_media_play"
+        android:title="Record data"
         android:visible="true"
         app:showAsAction="never" />
     <item

@@ -85,7 +85,6 @@ class BluetoothClient(private val device: BluetoothDevice) {
         try {
             //using custom command (RPMCommandFix() )because the one in the library fails
             val aux: ObdResponse = obdConnection.run(RPMCommandFix(), delayTime = 500)
-            Log.d("RPM value", aux.value)
             outputStream.write(aux.value.toByteArray())
             outputStream.flush()
         } catch (e: NoDataException) {
