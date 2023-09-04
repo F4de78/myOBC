@@ -33,12 +33,10 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
 
     private val TAG = "DeviceListActivity"
     var EXTRA_DEVICE_ADDRESS = "device_address"
+
     val REQUEST_ENABLE_BT = 1000
 
-    val BLUETOOTH_CONNECT_CODE = 1001
-    val BLUETOOTH_SCAN_CODE = 1002
     val BLUETOOTH_CODE = 1003
-    val BLUETOOTH_ADMIN_CODE = 1004
 
     val LOCATION_REQUEST_CODE = 1005
 
@@ -50,6 +48,9 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var mNewDevicesArrayAdapter: ArrayAdapter<String>
 
     private lateinit var progress: ProgressBar
+
+    private lateinit var start_bt: Button
+    private lateinit var stop_bt: Button
 
     // Function to check and request permission.
     private fun checkBtPermissions() {
@@ -126,7 +127,7 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
     private fun initBluetooth() {
         // Set result CANCELED in case the user backs out
         setResult(RESULT_CANCELED)
-
+        start_bt.isEnabled = false
         val pairedDevicesArrayAdapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1)
         mNewDevicesArrayAdapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1)
 
@@ -150,11 +151,6 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
         filter = IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
         this.registerReceiver(mReceiver, filter)
 
-        // Get the local Bluetooth adapter
-        //mBtAdapter = BluetoothAdapter.getDefaultAdapter()
-
-
-
         // Get a set of currently paired devices
         val pairedDevices = mBtAdapter.bondedDevices
 
@@ -172,6 +168,24 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
             pairedDevicesArrayAdapter.add("No device")
         }
         doDiscovery()
+    }
+
+    private fun doDiscovery() {
+        Log.d(TAG, "doDiscovery()")
+
+        progress.visibility = View.VISIBLE
+
+
+        // If we're already discovering, stop it
+        if (mBtAdapter.isDiscovering) {
+            mBtAdapter.cancelDiscovery()
+            progress.visibility = View.GONE
+            start_bt.isEnabled = true
+        }
+
+        // Request discover from BluetoothAdapter
+        mBtAdapter.startDiscovery()
+        start_bt.isEnabled = false
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -195,8 +209,10 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
         //if the bluetooh and the geolocation are activated, we can proceed
         setContentView(R.layout.activity_bluetooth)
         progress = findViewById<ProgressBar>(R.id.spinner)
-        findViewById<Button>(R.id.bt_start).setOnClickListener(this)
-        findViewById<Button>(R.id.bt_stop).setOnClickListener(this)
+        start_bt = findViewById<Button>(R.id.bt_start)
+        stop_bt = findViewById<Button>(R.id.bt_stop)
+        start_bt.setOnClickListener(this)
+        stop_bt.setOnClickListener(this)
         //check the bluetooth permission
         checkBtPermissions()
         //if we have all the requested permission, we can start to initialize the bluetooth
@@ -212,25 +228,6 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
 
         // Unregister broadcast listeners
         unregisterReceiver(mReceiver)
-    }
-
-    /**
-     * Start device discover with the BluetoothAdapter
-     */
-    private fun doDiscovery() {
-        Log.d(TAG, "doDiscovery()")
-
-        progress.visibility = View.VISIBLE;
-
-
-        // If we're already discovering, stop it
-        if (mBtAdapter.isDiscovering) {
-            mBtAdapter.cancelDiscovery()
-            progress.visibility = View.GONE;
-        }
-
-        // Request discover from BluetoothAdapter
-        mBtAdapter.startDiscovery()
     }
 
     /**
@@ -276,8 +273,10 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
                 // When discovery is finished, change the Activity title
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED == action) {
                 progress.visibility = View.GONE
+                start_bt.isEnabled = true
                 if (mNewDevicesArrayAdapter.count == 0) {
                     progress.visibility = View.GONE
+                    start_bt.isEnabled = true
                     mNewDevicesArrayAdapter.add("noDevices")
                 }
             }

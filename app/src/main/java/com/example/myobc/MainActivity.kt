@@ -9,15 +9,19 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.github.eltonvs.obd.command.NonNumericResponseException
 import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import java.io.BufferedInputStream
@@ -41,6 +45,28 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var bluetoothClient: BluetoothClient
 
+    private lateinit var rpm_job: Job
+    private lateinit var speed_job:Job
+    private lateinit var coolant_job:Job
+    private lateinit var oiltemp_job:Job
+    private lateinit var intaketemp_job:Job
+    private lateinit var ambienttemp_job:Job
+
+    // since some value takes a lot to change or can be the same for a long time,
+    // (eg. the engine is idling) we check if the new value is the same as the one read
+    // before and only update it if is different to save resources
+    private var lastRPMValue: Int = 0
+    private var lastSpeedValue: String = ""
+    private var lastOilValue: String = ""
+    private var lastCoolantValue: String = ""
+    private var lastIntakeValue: String = ""
+    private var lastAmbientValue: String = ""
+
+    private var connected: Boolean = false
+
+    val mutexRPM = Mutex()
+    val mutexSpeed = Mutex()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,7 +89,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.menu , menu);
+        menuInflater.inflate(R.menu.menu , menu)
         return true
     }
 
@@ -83,116 +109,167 @@ class MainActivity : AppCompatActivity() {
     }
     private fun connect() {
         if (address != "") {
-            // Get the BluetoothDevice object
-            mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-            //get bluetooth device
-            val device: BluetoothDevice = mBluetoothAdapter!!.getRemoteDevice(address)
-            bluetoothClient = BluetoothClient(device)
-            connection_status.text = "Connected to $address, connecting to ECU..."
-
             CoroutineScope(Dispatchers.Main).launch {
-                //connect to selected device
-                val connected = withContext(Dispatchers.IO) {
-                    bluetoothClient.connect()
-                }
-                if (connected) {
-                    connection_status.text = "Connected to ECU."
-                    var rpm_job: Job
-                    val speed_job:Job
-                    val coolant_job:Job
-                    val oiltemp_job:Job
-                    val intaketemp_job:Job
-                    val ambienttemp_job:Job
-                    coroutineScope {
-                        rpm_job = launch { while(true) RPM() }
-                        speed_job = launch { while(true) speed() }
-                        coolant_job = launch { while(true) coolant() }
-                        oiltemp_job = launch { while(true) oiltemp() }
-                        intaketemp_job = launch { while(true) intaketemp() }
-                        ambienttemp_job = launch { while(true) ambienttemp() }
-                    }
+                try {
+                    mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+                    val device: BluetoothDevice = mBluetoothAdapter!!.getRemoteDevice(address)
+                    bluetoothClient = BluetoothClient(device)
+                    connection_status.text = "Connected to $address, connecting to ECU..."
+
+                    // Connect to selected device
+                    connected = bluetoothClient.connect()
+                    display()
+
+                } catch (e: Exception) {
+                    // Handle exceptions appropriately
+                    e.printStackTrace()
                 }
             }
         }
     }
 
-    private suspend fun RPM(){
-        val outputStreamRPM = ByteArrayOutputStream();
-        bluetoothClient.askRPM(outputStreamRPM)
-        val inputStreamRPM = ByteArrayInputStream(outputStreamRPM.toByteArray())
-        val bufferedStream = BufferedInputStream(inputStreamRPM)
-        val resultString: String = bufferedStream.bufferedReader().use { it.readText() }
-        //after we read we tell other cooroutine to do their job
-        yield()
-        inputStreamRPM.close()
-        outputStreamRPM.close()
-        /** we need to do this step because the OBD parser fail to compute the correct formula to get
-            rpm (RPM = ECU_value/4) **/
-        val intval = resultString.toInt()/4
-        runOnUiThread {
-            RPM_display.text = intval.toString()
+    private fun display() {
+        if (connected) {
+            connection_status.text = "Connected to ECU."
+            CoroutineScope(Dispatchers.Default).launch { while (true) RPM() }
+            CoroutineScope(Dispatchers.Default).launch { while (true) speed() }
+            /*val coolantJob = launch { while (true) coolant() }
+            val oiltempJob = launch { while (true) oiltemp() }
+            val intaketempJob = launch { while (true) intaketemp() }
+            val ambienttempJob = launch { while (true) ambienttemp() }*/
         }
-        delay(0)
+    }
+
+    private suspend fun RPM() {
+        try {
+            val outputStreamRPM = ByteArrayOutputStream()
+            outputStreamRPM.reset()
+            bluetoothClient.askRPM(outputStreamRPM)
+
+            val inputStreamRPM = ByteArrayInputStream(outputStreamRPM.toByteArray())
+            val bufferedStream = BufferedInputStream(inputStreamRPM)
+            val resultString: String = bufferedStream.bufferedReader().use { it.readText() }
+
+            withContext(Dispatchers.IO) {
+                inputStreamRPM.close()
+                outputStreamRPM.close()
+            }
+
+            val intval = resultString.toInt() / 4
+
+            // Use mutex to safely update lastRPMValue
+                if (intval != lastRPMValue) {
+                    lastRPMValue = intval
+                    runOnUiThread {
+                        RPM_display.text = intval.toString()
+                    }
+                }
+
+            // Delay here if needed
+            delay(500)
+        } catch (e: NonNumericResponseException) {
+            // Handle exceptions appropriately
+            runOnUiThread {
+                RPM_display.text = "!"
+            }
+            delay(500)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private suspend fun speed() {
-        val outputStreamRPM = ByteArrayOutputStream();
-        bluetoothClient.askSpeed(outputStreamRPM)
-        val inputStreamSpeed = ByteArrayInputStream(outputStreamRPM.toByteArray())
-        val resultString: String = inputStreamSpeed.bufferedReader().use { it.readText() }
-        yield()
-        inputStreamSpeed.close()
-        outputStreamRPM.close()
-        runOnUiThread {
-            speed_display.text = resultString
+        try {
+            val outputStreamRPM = ByteArrayOutputStream()
+            outputStreamRPM.reset()
+            bluetoothClient.askSpeed(outputStreamRPM)
+
+            val inputStreamRPM = ByteArrayInputStream(outputStreamRPM.toByteArray())
+            val bufferedStream = BufferedInputStream(inputStreamRPM)
+            val resultString: String = bufferedStream.bufferedReader().use { it.readText() }
+
+            withContext(Dispatchers.IO) {
+                inputStreamRPM.close()
+                outputStreamRPM.close()
+            }
+
+            // Use mutex to safely update lastSpeedValue
+            mutexSpeed.withLock {
+                if (resultString != lastSpeedValue) {
+                    lastSpeedValue = resultString
+                    runOnUiThread {
+                        speed_display.text = resultString
+                    }
+                }
+            }
+
+            // Delay here if needed
+            delay(500)
+        } catch (e: NonNumericResponseException) {
+            // Handle exceptions appropriately
+            runOnUiThread {
+                speed_display.text = "!"
+            }
+            delay(500)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-        delay(100)
     }
 
+
     private suspend fun coolant() {
-        val outputStream = ByteArrayOutputStream();
+        val outputStream = ByteArrayOutputStream()
         bluetoothClient.askCoolantTemp(outputStream)
         val inputStream = ByteArrayInputStream(outputStream.toByteArray())
         val resultString: String = inputStream.bufferedReader().use { it.readText() }
         yield()
         inputStream.close()
         outputStream.close()
-        runOnUiThread {
-            coolant_display.text = resultString
+        if (resultString != lastCoolantValue) {
+            lastCoolantValue  = resultString
+            runOnUiThread {
+                coolant_display.text = resultString
+            }
         }
         delay(100)
     }
 
     private suspend fun oiltemp() {
-        val outputStream = ByteArrayOutputStream();
+        val outputStream = ByteArrayOutputStream()
         bluetoothClient.askOilTemp(outputStream)
         val inputStream = ByteArrayInputStream(outputStream.toByteArray())
         val resultString: String = inputStream.bufferedReader().use { it.readText() }
         yield()
         inputStream.close()
         outputStream.close()
-        runOnUiThread {
-            oil_temp_display.text = resultString
+        if (resultString != lastOilValue) {
+            lastOilValue  = resultString
+            runOnUiThread {
+                oil_temp_display.text = resultString
+            }
         }
         delay(100)
     }
 
     private suspend fun intaketemp() {
-        val outputStream = ByteArrayOutputStream();
+        val outputStream = ByteArrayOutputStream()
         bluetoothClient.askIntakeTemp(outputStream)
         val inputStream = ByteArrayInputStream(outputStream.toByteArray())
         val resultString: String = inputStream.bufferedReader().use { it.readText() }
         yield()
         inputStream.close()
         outputStream.close()
-        runOnUiThread {
-            intake_temp_display.text = resultString
+        if (resultString != lastIntakeValue) {
+            lastIntakeValue  = resultString
+            runOnUiThread {
+               intake_temp_display.text = resultString
+            }
         }
         delay(100)
     }
 
     private suspend fun ambienttemp() {
-        val outputStream = ByteArrayOutputStream();
+        val outputStream = ByteArrayOutputStream()
         bluetoothClient.askAmbientTemp(outputStream)
         val inputStream = ByteArrayInputStream(outputStream.toByteArray())
         val resultString: String = inputStream.bufferedReader().use { it.readText() }
@@ -200,8 +277,11 @@ class MainActivity : AppCompatActivity() {
         yield()
         inputStream.close()
         outputStream.close()
-        runOnUiThread {
-            ambient_temp_display.text = resultString
+        if (resultString != lastAmbientValue) {
+            lastAmbientValue  = resultString
+            runOnUiThread {
+                ambient_temp_display.text = resultString
+            }
         }
         delay(100)
     }
@@ -226,7 +306,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        //mBluetoothAdapter.cancelDiscovery()
+        rpm_job.cancel()
+        speed_job.cancel()
+        coolant_job.cancel()
+        oiltemp_job.cancel()
+        intaketemp_job.cancel()
+        ambienttemp_job.cancel()
     }
 
 

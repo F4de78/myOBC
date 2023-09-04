@@ -11,8 +11,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginTop="16dp"
         android:contextClickable="false"
         android:elegantTextHeight="true"
         android:fontFamily="monospace"
@@ -21,9 +20,8 @@
         android:textAllCaps="false"
         android:textColor="#FFB300"
         android:textSize="14sp"
-        app:layout_constraintBottom_toTopOf="@+id/bt_list_p"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/bt_title" />
+        app:layout_constraintTop_toBottomOf="@+id/materialToolbar" />
 
     <ListView
         android:id="@+id/bt_list_p"
@@ -35,9 +33,8 @@
         android:layout_marginBottom="8dp"
         app:layout_constraintBottom_toTopOf="@+id/bt_discovered"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/bt_title" />
+        app:layout_constraintTop_toBottomOf="@+id/bt_discovered2" />
 
     <ListView
         android:id="@+id/bt_list_d"
@@ -47,33 +44,10 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/bt_start"
+        app:layout_constraintBottom_toTopOf="@+id/bt_stop"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/bt_discovered" />
-
-    <TextView
-        android:id="@+id/bt_title"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="13dp"
-        android:layout_marginBottom="8dp"
-        android:contextClickable="false"
-        android:elegantTextHeight="true"
-        android:fontFamily="monospace"
-        android:text="Select a Bluetooth OBD interface"
-        android:textAlignment="inherit"
-        android:textAllCaps="false"
-        android:textColor="#FFB300"
-        android:textSize="16sp"
-        app:layout_constraintBottom_toTopOf="@+id/bt_list_p"
-        app:layout_constraintEnd_toStartOf="@+id/spinner"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/bt_discovered"
@@ -97,34 +71,18 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/bt_list_p" />
 
-    <ProgressBar
-        android:id="@+id/spinner"
-        style="?android:attr/progressBarStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="13dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/bt_list_p"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/bt_title"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <Button
         android:id="@+id/bt_start"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
         android:text="Start search"
         android:textColor="#43A047"
         android:textStyle="bold"
         android:typeface="monospace"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/bt_stop"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/bt_list_d" />
 
@@ -132,18 +90,47 @@
         android:id="@+id/bt_stop"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="16dp"
         android:text="Stop search"
         android:textColor="#E53935"
         android:textStyle="bold"
         android:typeface="monospace"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/bt_start"
-        app:layout_constraintTop_toBottomOf="@+id/bt_list_d"
-        app:layout_constraintVertical_bias="0.6" />
+        app:layout_constraintTop_toBottomOf="@+id/bt_list_d" />
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/materialToolbar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="?attr/actionBarTheme"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:title="Select a Bluetooth OBD interface"
+        app:titleTextColor="#FFC107" />
+
+    <ProgressBar
+        android:id="@+id/spinner"
+        style="@style/Base.Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="-5dp"
+        android:layout_marginTop="-7dp"
+        android:background="#00FFFFFF"
+        android:fadingEdge="horizontal|vertical"
+        android:indeterminate="true"
+        android:indeterminateBehavior="repeat"
+        android:indeterminateTint="#FFC107"
+        android:padding="0dp"
+        android:paddingTop="0dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/materialToolbar" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
