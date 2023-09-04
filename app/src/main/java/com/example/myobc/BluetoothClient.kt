@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothSocket
 import android.util.Log
 import com.github.eltonvs.obd.command.AdaptiveTimingMode
 import com.github.eltonvs.obd.command.NoDataException
+import com.github.eltonvs.obd.command.NonNumericResponseException
 import com.github.eltonvs.obd.command.ObdProtocols
 import com.github.eltonvs.obd.command.ObdResponse
 import com.github.eltonvs.obd.command.Switcher
@@ -15,6 +16,7 @@ import com.github.eltonvs.obd.command.at.SetEchoCommand
 import com.github.eltonvs.obd.command.at.SetLineFeedCommand
 import com.github.eltonvs.obd.command.at.SetSpacesCommand
 import com.github.eltonvs.obd.command.engine.SpeedCommand
+import com.github.eltonvs.obd.command.fuel.FuelConsumptionRateCommand
 import com.github.eltonvs.obd.command.temperature.AirIntakeTemperatureCommand
 import com.github.eltonvs.obd.command.temperature.AmbientAirTemperatureCommand
 import com.github.eltonvs.obd.command.temperature.EngineCoolantTemperatureCommand
@@ -33,8 +35,9 @@ import java.util.UUID
 
 class BluetoothClient(private val device: BluetoothDevice) {
 
+    // Standard UUID for SPP (Serial Port Profile)
     private val uuid: UUID =
-        UUID.fromString("00001101-0000-1000-8000-00805F9B34FB") // Standard UUID for SPP (Serial Port Profile)
+        UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
 
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private lateinit var bluetoothSocket: BluetoothSocket
@@ -43,10 +46,9 @@ class BluetoothClient(private val device: BluetoothDevice) {
 
     private lateinit var obdConnection: ObdDeviceConnection
 
-    /***
-     * AT Initialization procedure reversed engineered from "Torque" app
-     * */
-    private suspend fun torqueATInit(connection: ObdDeviceConnection){
+
+    //AT Initialization procedure reversed engineered from "Torque" app
+    private suspend fun torqueATInit(){
         obdConnection.run(ResetAdapterCommand(), delayTime = 1000)          //ATZ
         obdConnection.run(SetEchoCommand(Switcher.OFF), delayTime = 500)    //ATE0
         obdConnection.run(SetEchoCommand(Switcher.OFF), delayTime = 500)    //ATE0
@@ -75,7 +77,7 @@ class BluetoothClient(private val device: BluetoothDevice) {
             inputStream = bluetoothSocket.inputStream
             outputStream = bluetoothSocket.outputStream
             obdConnection = ObdDeviceConnection(inputStream, outputStream)
-            torqueATInit(obdConnection)
+            torqueATInit()
             delay(5000)
             Log.d("OBD connection", "OBD connection established")
             true
@@ -86,112 +88,121 @@ class BluetoothClient(private val device: BluetoothDevice) {
         }
     }
 
-    suspend fun askRPM(outputStream: OutputStream){
-        withContext(Dispatchers.IO) {
+    suspend fun askRPM(): String {
+        return withContext(Dispatchers.IO) {
             try {
                 //using custom command (RPMCommandFix() )because the one in the library is broken
-                val aux: ObdResponse = obdConnection.run(RPMCommandFix(), delayTime = 1000)
-                outputStream.write(aux.value.toByteArray())
+                val aux: ObdResponse = obdConnection.run(RPMCommandFix(), delayTime = 100)
+                Log.w("debugRPM", (aux.value.toInt()/4).toString())
                 yield()
-                //outputStream.flush()
-            } catch (e: NoDataException) {
+                (aux.value.toInt()/4).toString() // Return the value of aux.value
+            } catch (e: NonNumericResponseException) {
                 e.printStackTrace()
-            } finally {
-                outputStream.close()
+                "?NaN"
+            } catch(e:NoDataException){
+                e.printStackTrace()
+                "!DATA"
+            }finally {
+                // Close any resources if needed
             }
-            //delay(500)
         }
-        return 0
     }
 
-    suspend fun askSpeed(outputStream: OutputStream)= withTimeoutOrNull(5000) {
-        withContext(Dispatchers.IO) {
+    suspend fun askSpeed(): String {
+        return withContext(Dispatchers.IO) {
             try {
-                val aux: ObdResponse = obdConnection.run(SpeedCommand(), delayTime = 1000)
-                outputStream.write(aux.value.toByteArray())
-                //outputStream.flush()
+                val aux: ObdResponse = obdConnection.run(SpeedCommand(), delayTime = 100)
                 yield()
-
-
-            } catch (e: NoDataException) {
-                outputStream.write("!DATA".toByteArray())
+                aux.value // Return the value of aux.value
+            } catch (e: NonNumericResponseException) {
                 e.printStackTrace()
-            } finally {
-                outputStream.close()
+                "?NaN"
+            } catch(e:NoDataException){
+                e.printStackTrace()
+                "!DATA"
+            }finally {
+                // Close any resources if needed
             }
-            //delay(500)
         }
     }
 
-    suspend fun askCoolantTemp(outputStream: OutputStream)= withTimeoutOrNull(5000) {
-        try {
-            val aux: ObdResponse =
-                obdConnection.run(EngineCoolantTemperatureCommand(), delayTime = 500)
-            withContext(Dispatchers.IO) {
-                outputStream.write(aux.value.toByteArray())
+    suspend fun askCoolantTemp(): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val aux: ObdResponse =
+                    obdConnection.run(EngineCoolantTemperatureCommand(), delayTime = 100)
+                yield()
+                aux.value // Return the value of aux.value
+            } catch (e: NonNumericResponseException) {
+                e.printStackTrace()
+                "?NaN"
+            } catch(e:NoDataException){
+                e.printStackTrace()
+                "!DATA"
+            }finally {
+                // Close any resources if needed
             }
-            outputStream.flush()
-        } catch (e: NoDataException) {
-            outputStream.write("!DATA".toByteArray())
-            e.printStackTrace()
-        } finally {
-            outputStream.close()
         }
     }
 
-    suspend fun askOilTemp(outputStream: OutputStream)= withTimeoutOrNull(5000) {
-        try {
-            val aux: ObdResponse =
-                obdConnection.run(OilTemperatureCommand(), delayTime = 500)
-            Log.e("oil response",aux.value)
-
-            withContext(Dispatchers.IO) {
-                outputStream.write(aux.value.toByteArray())
+    suspend fun askOilTemp(): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val aux: ObdResponse =
+                    obdConnection.run(OilTemperatureCommand(), delayTime = 100)
+                yield()
+                aux.value // Return the value of aux.value
+            } catch (e: NonNumericResponseException) {
+                e.printStackTrace()
+                "?NaN"
+            } catch(e:NoDataException){
+                e.printStackTrace()
+                "!DATA"
+            }finally {
+                // Close any resources if needed
             }
-            outputStream.flush()
-
-        } catch (e: NoDataException) {
-            outputStream.write("!DATA".toByteArray())
-            e.printStackTrace()
-        } finally {
-            outputStream.close()
         }
     }
 
-    suspend fun askIntakeTemp(outputStream: OutputStream)= withTimeoutOrNull(5000) {
-        try {
-            val aux: ObdResponse =
-                obdConnection.run(AirIntakeTemperatureCommand(), delayTime = 500)
-
-            withContext(Dispatchers.IO) {
-                outputStream.write(aux.value.toByteArray())
+    suspend fun askIntakeTemp(): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val aux: ObdResponse =
+                    obdConnection.run(AirIntakeTemperatureCommand(), delayTime = 100)
+                yield()
+                aux.value // Return the value of aux.value
+            } catch (e: NonNumericResponseException) {
+                e.printStackTrace()
+                "?NaN"
+            } catch(e:NoDataException){
+                e.printStackTrace()
+                "!DATA"
+            }finally {
+                // Close any resources if needed
             }
-            outputStream.flush()
-        } catch (e: NoDataException) {
-            outputStream.write("!DATA".toByteArray())
-            e.printStackTrace()
-        } finally {
-            outputStream.close()
         }
     }
 
-    suspend fun askAmbientTemp(outputStream: OutputStream)= withTimeoutOrNull(5000) {
-        try {
-            val aux: ObdResponse =
-                obdConnection.run(AmbientAirTemperatureCommand(), delayTime = 500)
-            Log.e("ambient", aux.value)
-
-            withContext(Dispatchers.IO) {
-                outputStream.write(aux.value.toByteArray())
+    suspend fun askFuelConsumptionTemp(): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val aux: ObdResponse =
+                    obdConnection.run(FuelConsumptionRateCommand(), delayTime = 100)
+                yield()
+                aux.value // Return the value of aux.value
+            } catch (e: NonNumericResponseException) {
+                e.printStackTrace()
+                "?NaN"
+            } catch(e:NoDataException){
+                e.printStackTrace()
+                "!DATA"
+            }finally {
+                // Close any resources if needed
             }
-            outputStream.flush()
-        } catch (e: NoDataException) {
-            outputStream.write("!DATA".toByteArray())
-            e.printStackTrace()
-        } finally {
-            outputStream.close()
         }
     }
+
+
 
     suspend fun disconnect() = withContext(Dispatchers.IO) {
         try {

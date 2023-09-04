@@ -16,11 +16,14 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:fontFamily="monospace"
         android:text="connection indicator"
         android:textAlignment="center"
         android:textColor="@android:color/holo_orange_light"
+        app:layout_constraintBottom_toTopOf="@+id/frameLayoutSpeed"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/toolbar" />
@@ -104,10 +107,10 @@
             android:layout_marginTop="4dp"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="4dp"
-            android:text="Ambient Air Temperature (C°)"
+            android:text="Fuel Consumption      (L/h)"
             android:textAlignment="center"
             android:typeface="monospace"
-            app:layout_constraintBottom_toTopOf="@+id/air_temp_display"
+            app:layout_constraintBottom_toTopOf="@+id/fuel_consumption_display"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.571"
             app:layout_constraintStart_toStartOf="parent"
@@ -115,7 +118,7 @@
             app:layout_constraintVertical_bias="0.387" />
 
         <TextView
-            android:id="@+id/air_temp_display"
+            android:id="@+id/fuel_consumption_display"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="2dp"
@@ -395,6 +398,22 @@
         app:title="myOBC"
         app:titleCentered="true"
         app:titleTextColor="#FFC107" />
+
+    <Button
+        android:id="@+id/stop"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="24dp"
+        android:background="#FF5252"
+        android:hapticFeedbackEnabled="true"
+        android:text="STOP"
+        android:textAlignment="center"
+        app:barrierMargin="@dimen/material_emphasis_disabled_background"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

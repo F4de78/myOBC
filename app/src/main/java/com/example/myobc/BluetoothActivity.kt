@@ -175,7 +175,6 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
 
         progress.visibility = View.VISIBLE
 
-
         // If we're already discovering, stop it
         if (mBtAdapter.isDiscovering) {
             mBtAdapter.cancelDiscovery()

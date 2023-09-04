@@ -116,7 +116,7 @@
             android:text="Ambient Air Temperature (C°)"
             android:textAlignment="center"
             android:typeface="monospace"
-            app:layout_constraintBottom_toTopOf="@+id/air_temp_display"
+            app:layout_constraintBottom_toTopOf="@+id/fuel_consumption_display"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.571"
             app:layout_constraintStart_toStartOf="parent"
@@ -124,7 +124,7 @@
             app:layout_constraintVertical_bias="0.387" />
 
         <TextView
-            android:id="@+id/air_temp_display"
+            android:id="@+id/fuel_consumption_display"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="2dp"
