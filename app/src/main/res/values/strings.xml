@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">myOBC</string>
+    <string name="not_connected">Not connected to any ECU</string>
+    <string name="connecting">Connected to %s, connecting to ECU…</string>
+    <string name="connected">Connected to ECU</string>
+    <string name="connecting_address">Connecting to %s …</string>
+
 </resources>

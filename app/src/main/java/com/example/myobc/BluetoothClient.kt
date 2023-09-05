@@ -73,7 +73,7 @@ class BluetoothClient(private val device: BluetoothDevice) {
         return@withContext try {
             bluetoothSocket = device.createRfcommSocketToServiceRecord(uuid)
             bluetoothSocket.connect()
-            Log.e("BT connection", "BT socket created: ${bluetoothSocket.isConnected}")
+            Log.d("BT connection", "BT socket created: ${bluetoothSocket.isConnected}")
             inputStream = bluetoothSocket.inputStream
             outputStream = bluetoothSocket.outputStream
             obdConnection = ObdDeviceConnection(inputStream, outputStream)

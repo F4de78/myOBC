@@ -9,7 +9,7 @@
     <item
         android:id="@+id/rec"
         android:icon="@android:drawable/ic_media_play"
-        android:title="Record data"
+        android:title="Start logging"
         android:visible="true"
         app:showAsAction="never" />
     <item

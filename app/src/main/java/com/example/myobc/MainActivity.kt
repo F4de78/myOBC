@@ -3,27 +3,26 @@ package com.example.myobc
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
-import java.time.Duration
 
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
+    var menu: Menu? = null
     /*displays gauges*/
     private lateinit var connection_status: TextView
     private lateinit var speed_display: TextView
@@ -51,6 +50,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     private var connected: Boolean = false
     private var read: Boolean = true
+    private var log: Boolean = false
 
     private lateinit var stop: Button
 
@@ -75,7 +75,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         stop = findViewById<Button>(R.id.stop)
         stop.setOnClickListener(this)
 
-        connection_status.text = "Not connected to any ECU"
+        connection_status.text = getString(R.string.not_connected)
+
 
     }
 
@@ -83,10 +84,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.menu , menu)
+        this.menu = menu;
         return true
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             //open the bluetooth device list, the user can select a device and try to connect with
@@ -97,16 +100,28 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 )
                 return true
             }
-            R.id.rec ->{
-                file = CsvLog("OBDOBC_log_${System.currentTimeMillis()/1000}", this)
-                file.initCSV()
-                Toast.makeText(this,
-                    " File created in: ${Environment.getExternalStorageDirectory().absolutePath}",
-                        Toast.LENGTH_LONG).show()
+            R.id.rec -> {
+                if (!log) {
+                    //invalidateOptionsMenu();
+                    //findViewById<TextView>(R.id.rec).text = "Start logging"
+                    menu?.findItem(R.id.rec)?.title = "Stop logging";
+                    file = CsvLog(
+                        "OBDOBC_log_${System.currentTimeMillis() / 1000}",
+                        applicationContext
+                    )
+                    file.initCSV()
+                    log = true
+                }else{
+                    //invalidateOptionsMenu();
+                    //findViewById<TextView>(R.id.rec).text = "Stop logging"
+                    menu?.findItem(R.id.rec)?.title = "Start logging";
+                    log = false
+                }
             }
         }
         return false
     }
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun connect() {
         if (address != "") {
             CoroutineScope(Dispatchers.Main).launch {
@@ -114,7 +129,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                     mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
                     val device: BluetoothDevice = mBluetoothAdapter!!.getRemoteDevice(address)
                     bluetoothClient = BluetoothClient(device)
-                    connection_status.text = "Connected to $address, connecting to ECU..."
+                    connection_status.text = getString(R.string.connecting,address)
 
                     // Connect to selected device
                     connected = bluetoothClient.connect()
@@ -129,9 +144,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private suspend fun display() {
         if (connected) {
-            connection_status.text = "Connected to ECU."
+            connection_status.text = getString(R.string.connected)
             withContext(Dispatchers.Default) {
                 while(read)
                     updateUI()
@@ -139,6 +155,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private suspend fun updateUI(){
         //since we have to run all UI update operation in Main thread, we first retrieve information
         //from the IO threads, and then update it sequentially on the Main thread (UI thread)
@@ -190,6 +207,20 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 fuel_consumption_display.text = fuelconsumption_ret
             }
         }
+        //if the user is recording data
+        withContext(Dispatchers.IO){
+            if(log){
+                file.appendRow(listOf(
+                    (System.currentTimeMillis()/1000).toString(),//timestamp
+                    RPM_ret,
+                    speed_ret,
+                    coolant_ret,
+                    oil_ret,
+                    intake_ret,
+                    fuelconsumption_ret))
+            }
+        }
+
     }
 
     private suspend fun RPM(): String{
@@ -228,6 +259,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(
         requestCode: Int, resultCode: Int,
@@ -240,7 +272,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 val extras = data!!.extras
                 address= extras?.getString("device_address").toString()
                 Log.e("address",address)
-                connection_status.text = "Connecting to $address ..."
+                connection_status.text = getString(R.string.connecting_address,address)
                 connect()
             }
         }
@@ -256,11 +288,16 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun stop(){
-        read = false
-        CoroutineScope(Dispatchers.IO).launch{
-            bluetoothClient.disconnect()
+        if(read){
+            read = false
+            log = false
+            CoroutineScope(Dispatchers.IO).launch{
+                bluetoothClient.disconnect()
+                delay(500)
+            }
+            resetDisplays()
+            connection_status.text = getString(R.string.not_connected)
         }
-        resetDisplays()
     }
     override fun onClick(view: View?) {
         when(view?.id){
@@ -269,11 +306,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
     }
-
-
     override fun onDestroy() {
         super.onDestroy()
         read = false
+        log = false
     }
 
 
