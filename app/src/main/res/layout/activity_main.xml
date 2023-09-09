@@ -100,14 +100,14 @@
         app:layout_constraintTop_toBottomOf="@+id/frameLayoutOilTemperature">
 
         <TextView
-            android:id="@+id/air_temp_unit"
+            android:id="@+id/engine_load_unit"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginTop="4dp"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="4dp"
-            android:text="Fuel Consumption      (L/h)"
+            android:text="Engine Load (%)"
             android:textAlignment="center"
             android:typeface="monospace"
             app:layout_constraintBottom_toTopOf="@+id/fuel_consumption_display"
@@ -185,6 +185,7 @@
             android:layout_marginBottom="2dp"
             android:background="#2C2B2B"
             android:contextClickable="true"
+            android:fontFamily="monospace"
             android:includeFontPadding="true"
             android:padding="10dp"
             android:paddingStart="10dp"
@@ -344,7 +345,7 @@
             android:layout_marginTop="4dp"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="4dp"
-            android:text="Oil Temperature (C)"
+            android:text="Oil Temperature (C°)"
             android:textAlignment="center"
             android:typeface="monospace"
             app:layout_constraintBottom_toTopOf="@+id/oil_temp_display"

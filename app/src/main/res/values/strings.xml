@@ -3,6 +3,7 @@
     <string name="not_connected">Not connected to any ECU</string>
     <string name="connecting">Connected to %s, connecting to ECU…</string>
     <string name="connected">Connected to ECU</string>
+    <string name="connection_error">Connection error: unable to connect</string>
     <string name="connecting_address">Connecting to %s …</string>
-
+    <string name="default_display">_._</string>
 </resources>

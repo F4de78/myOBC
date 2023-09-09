@@ -8,23 +8,37 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import java.io.File
-import java.io.FileOutputStream
 import java.io.FileWriter
 import java.io.IOException
+import java.lang.Exception
 
 @SuppressLint("Recycle")
 @RequiresApi(Build.VERSION_CODES.Q)
-class CsvLog(private val filename: String, private val context: Context) {
+open class CsvLog(private val filename: String, private val context: Context) {
     private val separator = "," // CSV separator
     private lateinit var logFile: File
+    var path: File
 
     init {
+
         val externalStorageVolumes = ContextCompat.getExternalFilesDirs(
             context, Environment.DIRECTORY_DOCUMENTS
         )
-        val path = externalStorageVolumes[0]
-        logFile = File(path, filename)
-        Log.d("log", "saved in: $logFile")
+        path = externalStorageVolumes[0]
+        if(isExternalStorageReadable(path)){
+            logFile = File(path, filename)
+            Log.d("log", "saved in: $logFile")
+        }
+
+    }
+
+    private fun isExternalStorageReadable(path: File?): Boolean {
+        val state: String = Environment.getExternalStorageState(path)
+        if(Environment.MEDIA_MOUNTED != state){
+            throw Exception("Extmem not available")
+        }else{
+            return true
+        }
     }
 
     fun addColumn(columnName: String) {
@@ -53,7 +67,7 @@ class CsvLog(private val filename: String, private val context: Context) {
     }
 
     // Function to initialize the CSV with the default header
-    fun initCSV() {
+    fun makeHeader() {
         this.addColumn("timestamp")
         this.addColumn("RPM")
         this.addColumn("speed")

@@ -15,18 +15,15 @@ import com.github.eltonvs.obd.command.at.SetAdaptiveTimingCommand
 import com.github.eltonvs.obd.command.at.SetEchoCommand
 import com.github.eltonvs.obd.command.at.SetLineFeedCommand
 import com.github.eltonvs.obd.command.at.SetSpacesCommand
+import com.github.eltonvs.obd.command.engine.LoadCommand
 import com.github.eltonvs.obd.command.engine.SpeedCommand
-import com.github.eltonvs.obd.command.fuel.FuelConsumptionRateCommand
 import com.github.eltonvs.obd.command.temperature.AirIntakeTemperatureCommand
-import com.github.eltonvs.obd.command.temperature.AmbientAirTemperatureCommand
 import com.github.eltonvs.obd.command.temperature.EngineCoolantTemperatureCommand
 import com.github.eltonvs.obd.command.temperature.OilTemperatureCommand
 import com.github.eltonvs.obd.connection.ObdDeviceConnection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 import java.io.IOException
 import java.io.InputStream
@@ -78,7 +75,7 @@ class BluetoothClient(private val device: BluetoothDevice) {
             outputStream = bluetoothSocket.outputStream
             obdConnection = ObdDeviceConnection(inputStream, outputStream)
             torqueATInit()
-            delay(5000)
+            delay(1000)
             Log.d("OBD connection", "OBD connection established")
             true
         } catch (e: IOException) {
@@ -183,11 +180,11 @@ class BluetoothClient(private val device: BluetoothDevice) {
         }
     }
 
-    suspend fun askFuelConsumptionTemp(): String {
+    suspend fun askEngineLoad(): String {
         return withContext(Dispatchers.IO) {
             try {
                 val aux: ObdResponse =
-                    obdConnection.run(FuelConsumptionRateCommand(), delayTime = 100)
+                    obdConnection.run(LoadCommand(), delayTime = 100)
                 yield()
                 aux.value // Return the value of aux.value
             } catch (e: NonNumericResponseException) {

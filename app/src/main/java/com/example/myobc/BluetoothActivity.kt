@@ -4,6 +4,8 @@ import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.Manifest.permission.BLUETOOTH
 import android.Manifest.permission.BLUETOOTH_ADMIN
+import android.Manifest.permission.BLUETOOTH_CONNECT
+import android.Manifest.permission.BLUETOOTH_SCAN
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -59,7 +61,9 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
             BLUETOOTH_ADMIN,
             //those two permission are needed in Android <12
             ACCESS_FINE_LOCATION,
-            ACCESS_COARSE_LOCATION
+            ACCESS_COARSE_LOCATION,
+            BLUETOOTH_CONNECT,
+            BLUETOOTH_SCAN
         )
 
         val permissionsToRequest = requiredPermissions.filter {
@@ -99,7 +103,6 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
             }
             setNegativeButton("Cancel") { dialog, _ ->
                 dialog.dismiss()
-                // Handle the cancellation if needed
             }
         }
         val dialog = builder.create()
@@ -117,7 +120,6 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
             }
             setNegativeButton("Cancel") { dialog, _ ->
                 dialog.dismiss()
-                // Handle the cancellation if needed
             }
         }
         val dialog = builder.create()
@@ -179,7 +181,6 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
         if (mBtAdapter.isDiscovering) {
             mBtAdapter.cancelDiscovery()
             progress.visibility = View.GONE
-            start_bt.isEnabled = true
         }
 
         // Request discover from BluetoothAdapter
@@ -270,6 +271,7 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
                     )
                 }
                 // When discovery is finished, change the Activity title
+                start_bt.isEnabled = true
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED == action) {
                 progress.visibility = View.GONE
                 start_bt.isEnabled = true
@@ -336,6 +338,7 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
             R.id.bt_stop->{
                 mBtAdapter.cancelDiscovery()
                 progress.visibility = View.GONE
+                //start_bt.isEnabled = false
             }
         }
     }

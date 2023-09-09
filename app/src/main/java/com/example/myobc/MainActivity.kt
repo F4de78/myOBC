@@ -9,32 +9,39 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
+import java.time.Duration
 
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
+    //used for dynamically change menu entry title
     var menu: Menu? = null
-    /*displays gauges*/
+    //displays gauges
     private lateinit var connection_status: TextView
     private lateinit var speed_display: TextView
     private lateinit var RPM_display: TextView
     private lateinit var coolant_display: TextView
     private lateinit var oil_temp_display: TextView
     private lateinit var intake_temp_display: TextView
-    private lateinit var fuel_consumption_display: TextView
+    private lateinit var engine_load_display: TextView
 
     private var address: String = ""
 
-    private var mBluetoothAdapter: BluetoothAdapter? = null
+    private lateinit var mBluetoothAdapter: BluetoothAdapter
 
     private lateinit var bluetoothClient: BluetoothClient
 
@@ -46,20 +53,22 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var lastOilValue: String = ""
     private var lastCoolantValue: String = ""
     private var lastIntakeValue: String = ""
-    private var fuelConsumptionValue: String = ""
+    private var lastEngineLoad: String = ""
 
     private var connected: Boolean = false
     private var read: Boolean = true
     private var log: Boolean = false
 
     private lateinit var stop: Button
-
-    private var default_text = "_._"
-
     private lateinit var file: CsvLog
+
+    private lateinit var job: Job
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        //keeps the screen always on
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         //toolbar setup
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
@@ -70,14 +79,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         coolant_display = findViewById<TextView>(R.id.coolant_display)
         oil_temp_display = findViewById<TextView>(R.id.oil_temp_display)
         intake_temp_display = findViewById<TextView>(R.id.intake_air_display)
-        fuel_consumption_display = findViewById<TextView>(R.id.fuel_consumption_display)
+        engine_load_display = findViewById<TextView>(R.id.fuel_consumption_display)
 
         stop = findViewById<Button>(R.id.stop)
         stop.setOnClickListener(this)
 
         connection_status.text = getString(R.string.not_connected)
-
-
     }
 
 
@@ -102,20 +109,23 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             }
             R.id.rec -> {
                 if (!log) {
-                    //invalidateOptionsMenu();
-                    //findViewById<TextView>(R.id.rec).text = "Start logging"
                     menu?.findItem(R.id.rec)?.title = "Stop logging";
-                    file = CsvLog(
-                        "OBDOBC_log_${System.currentTimeMillis() / 1000}",
-                        applicationContext
-                    )
-                    file.initCSV()
-                    log = true
+                    try{
+                        file = CsvLog(
+                            "OBDOBC_log_${System.currentTimeMillis() / 1000}.csv",
+                            applicationContext
+                        )
+                        file.makeHeader()
+                        log = true
+                    }catch(e:Exception){
+                        Toast.makeText(this,"Error: $e",Toast.LENGTH_LONG).show()
+                    }
+
                 }else{
-                    //invalidateOptionsMenu();
-                    //findViewById<TextView>(R.id.rec).text = "Stop logging"
                     menu?.findItem(R.id.rec)?.title = "Start logging";
                     log = false
+                    Toast.makeText(this,"Stop logging\nFile saved in ${file.path}" +
+                            ".",Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -127,17 +137,18 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
                     mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-                    val device: BluetoothDevice = mBluetoothAdapter!!.getRemoteDevice(address)
+                    val device: BluetoothDevice = mBluetoothAdapter.getRemoteDevice(address)
                     bluetoothClient = BluetoothClient(device)
-                    connection_status.text = getString(R.string.connecting,address)
-
+                    runOnUiThread{
+                        connection_status.text = getString(R.string.connecting,address)
+                    }
                     // Connect to selected device
                     connected = bluetoothClient.connect()
                     read = true
                     display()
 
                 } catch (e: Exception) {
-                    // Handle exceptions appropriately
+                    connection_status.text = getString(R.string.connection_error)
                     e.printStackTrace()
                 }
             }
@@ -148,10 +159,15 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private suspend fun display() {
         if (connected) {
             connection_status.text = getString(R.string.connected)
-            withContext(Dispatchers.Default) {
-                while(read)
-                    updateUI()
+            coroutineScope{
+                job = launch {
+                    while (read){
+                        yield()
+                        updateUI()
+                    }
+                }
             }
+
         }
     }
 
@@ -164,7 +180,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         val coolant_ret = coolant()
         val oil_ret = oiltemp()
         val intake_ret = intakeTemp()
-        val fuelconsumption_ret = fuelConsumption()
+        val fuelconsumption_ret = engineLoad()
         //update RPM display
         if (RPM_ret != lastRPMValue) {
             lastRPMValue = RPM_ret
@@ -202,9 +218,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
 
         if (fuelconsumption_ret != lastCoolantValue) {
-            fuelConsumptionValue = fuelconsumption_ret
+            lastEngineLoad = fuelconsumption_ret
             runOnUiThread {
-                fuel_consumption_display.text = fuelconsumption_ret
+                engine_load_display.text = fuelconsumption_ret
             }
         }
         //if the user is recording data
@@ -253,9 +269,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    private suspend fun fuelConsumption(): String{
+    private suspend fun engineLoad(): String{
         return withContext(Dispatchers.IO){
-            bluetoothClient.askFuelConsumptionTemp()
+            bluetoothClient.askEngineLoad()
         }
     }
 
@@ -279,30 +295,48 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun resetDisplays(){
-        RPM_display.text = default_text
-        speed_display.text = default_text
-        coolant_display.text = default_text
-        oil_temp_display.text = default_text
-        intake_temp_display.text = default_text
-        fuel_consumption_display.text = default_text
+        RPM_display.text = getString(R.string.default_display)
+        speed_display.text = getString(R.string.default_display)
+        coolant_display.text = getString(R.string.default_display)
+        oil_temp_display.text = getString(R.string.default_display)
+        intake_temp_display.text = getString(R.string.default_display)
+        engine_load_display.text = getString(R.string.default_display)
     }
 
+    private fun resetLastState(){
+        lastRPMValue = ""
+        lastSpeedValue = ""
+        lastOilValue = ""
+        lastCoolantValue = ""
+        lastIntakeValue= ""
+        lastEngineLoad= ""
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun stop(){
         if(read){
             read = false
+            if (log)
+                Toast.makeText(this,"Stop logging\nFile saved in ${file?.path}" +
+                        ".",Toast.LENGTH_LONG).show()
             log = false
-            CoroutineScope(Dispatchers.IO).launch{
+            CoroutineScope(Dispatchers.Default).launch{
+                job.cancel()
+                job.join()
                 bluetoothClient.disconnect()
                 delay(500)
             }
             resetDisplays()
+            resetLastState()
             connection_status.text = getString(R.string.not_connected)
         }
     }
+    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onClick(view: View?) {
         when(view?.id){
             R.id.stop->{
                 stop()
+                Toast.makeText(this,"Disconnected from OBD.",Toast.LENGTH_SHORT).show()
             }
         }
     }
