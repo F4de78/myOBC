@@ -15,6 +15,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -25,6 +26,7 @@ import android.widget.Button
 import android.widget.ListView
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -55,6 +57,7 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var stop_bt: Button
 
     // Function to check and request permission.
+    @RequiresApi(Build.VERSION_CODES.S)
     private fun checkBtPermissions() {
         val requiredPermissions = arrayOf(
             BLUETOOTH,
@@ -62,6 +65,7 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
             //those two permission are needed in Android <12
             ACCESS_FINE_LOCATION,
             ACCESS_COARSE_LOCATION,
+            //needed in Android 12>
             BLUETOOTH_CONNECT,
             BLUETOOTH_SCAN
         )
@@ -103,6 +107,8 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
             }
             setNegativeButton("Cancel") { dialog, _ ->
                 dialog.dismiss()
+                //if dismiss, goes back to start activity
+                startActivity(Intent(this@BluetoothActivity, MainActivity::class.java))
             }
         }
         val dialog = builder.create()
@@ -120,6 +126,8 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
             }
             setNegativeButton("Cancel") { dialog, _ ->
                 dialog.dismiss()
+                //if dismiss, goes back to start activity
+                startActivity(Intent(this@BluetoothActivity, MainActivity::class.java))
             }
         }
         val dialog = builder.create()
@@ -188,11 +196,11 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
         start_bt.isEnabled = false
     }
 
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val bluetoothManager: BluetoothManager = getSystemService(BluetoothManager::class.java)
         mBtAdapter = bluetoothManager.adapter
-        //check if bluetooth is enabled
         // Check if bluetooth is enabled
         if (!isBluetoothEnabled()) {
             showBluetoothAlertDialog()

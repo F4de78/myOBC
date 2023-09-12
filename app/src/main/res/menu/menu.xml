@@ -13,6 +13,9 @@
         android:visible="true"
         app:showAsAction="never" />
     <item
+        android:id="@+id/carinfo"
+        android:title="Car info" />
+    <item
         android:id="@+id/bt_connect"
         android:icon="@android:drawable/stat_sys_data_bluetooth"
         android:menuCategory="container"

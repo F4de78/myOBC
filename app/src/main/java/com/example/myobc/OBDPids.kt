@@ -7,7 +7,8 @@ import com.github.eltonvs.obd.command.Switcher
 import com.github.eltonvs.obd.command.bytesToInt
 
 /**
- * Declaration of other OBD command
+ * Declaration of other OBD command.
+ * In this class are specified commands that are not included in the library, specially init codes
  */
 
 class SetBaudRateCommand(baud: Int) : ATCommand() {

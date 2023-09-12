@@ -24,7 +24,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
-import java.time.Duration
 
 
 class MainActivity : AppCompatActivity(), View.OnClickListener {
@@ -79,7 +78,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         coolant_display = findViewById<TextView>(R.id.coolant_display)
         oil_temp_display = findViewById<TextView>(R.id.oil_temp_display)
         intake_temp_display = findViewById<TextView>(R.id.intake_air_display)
-        engine_load_display = findViewById<TextView>(R.id.fuel_consumption_display)
+        engine_load_display = findViewById<TextView>(R.id.engine_load_display)
 
         stop = findViewById<Button>(R.id.stop)
         stop.setOnClickListener(this)
@@ -128,13 +127,16 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                             ".",Toast.LENGTH_LONG).show()
                 }
             }
+            R.id.carinfo -> {
+                startActivity(Intent(this@MainActivity, CarInfoActivity::class.java))
+            }
         }
         return false
     }
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun connect() {
         if (address != "") {
-            CoroutineScope(Dispatchers.Main).launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 try {
                     mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
                     val device: BluetoothDevice = mBluetoothAdapter.getRemoteDevice(address)
