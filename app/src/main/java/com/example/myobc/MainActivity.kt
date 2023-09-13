@@ -10,6 +10,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
+import android.widget.ActionMenuView
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -60,8 +61,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     private lateinit var stop: Button
     private lateinit var file: CsvLog
+    private var bt: MenuItem? = null
 
-    private lateinit var job: Job
+    private var job: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,7 +84,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
         stop = findViewById<Button>(R.id.stop)
         stop.setOnClickListener(this)
-
+        stop.isEnabled = false
+        
         connection_status.text = getString(R.string.not_connected)
     }
 
@@ -91,6 +94,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.menu , menu)
         this.menu = menu;
+        bt = menu?.findItem(R.id.bt_connect)
         return true
     }
 
@@ -143,10 +147,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                     bluetoothClient = BluetoothClient(device)
                     runOnUiThread{
                         connection_status.text = getString(R.string.connecting,address)
+
                     }
                     // Connect to selected device
                     connected = bluetoothClient.connect()
                     read = true
+
                     display()
 
                 } catch (e: Exception) {
@@ -161,6 +167,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private suspend fun display() {
         if (connected) {
             connection_status.text = getString(R.string.connected)
+            runOnUiThread(){
+                stop.isEnabled = true
+                bt?.isEnabled = false
+                bt?.icon?.alpha = 120;
+            }
             coroutineScope{
                 job = launch {
                     while (read){
@@ -317,19 +328,22 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun stop(){
         if(read){
+            stop.isEnabled = false
             read = false
             if (log)
-                Toast.makeText(this,"Stop logging\nFile saved in ${file?.path}" +
+                Toast.makeText(this,"Stop logging\nFile saved in ${file.path}" +
                         ".",Toast.LENGTH_LONG).show()
             log = false
             CoroutineScope(Dispatchers.Default).launch{
-                job.cancel()
-                job.join()
+                job?.cancel()
+                job?.join()
                 bluetoothClient.disconnect()
                 delay(500)
             }
             resetDisplays()
             resetLastState()
+            bt?.isEnabled = true
+            bt?.icon?.alpha = 255;
             connection_status.text = getString(R.string.not_connected)
         }
     }
@@ -342,10 +356,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
     }
+    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onDestroy() {
         super.onDestroy()
         read = false
         log = false
+        stop()
     }
 
 

@@ -111,7 +111,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:title="Select a Bluetooth OBD interface" />
+        app:title="Select a Bluetooth OBD interface"
+        app:titleTextColor="#FFD740" />
 
     <ProgressBar
         android:id="@+id/spinner"
