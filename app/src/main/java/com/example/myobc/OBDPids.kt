@@ -17,7 +17,7 @@ class SetBaudRateCommand(baud: Int) : ATCommand() {
     override val mode = "AT"
     override val pid = "PB38400"
 }
-//TODO: use switcher
+
 class HeadersCommand(header: Switcher) : ATCommand() {
     override val tag = "HEADER"
     override val name = "Set at header"

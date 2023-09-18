@@ -99,8 +99,6 @@ class BluetoothClient(private val device: BluetoothDevice) {
             } catch(e:NoDataException){
                 e.printStackTrace()
                 "!DATA"
-            }finally {
-                // Close any resources if needed
             }
         }
     }
@@ -136,8 +134,6 @@ class BluetoothClient(private val device: BluetoothDevice) {
             } catch(e:NoDataException){
                 e.printStackTrace()
                 "!DATA"
-            }finally {
-                // Close any resources if needed
             }
         }
     }
@@ -155,8 +151,6 @@ class BluetoothClient(private val device: BluetoothDevice) {
             } catch(e:NoDataException){
                 e.printStackTrace()
                 "!DATA"
-            }finally {
-                // Close any resources if needed
             }
         }
     }
@@ -174,8 +168,6 @@ class BluetoothClient(private val device: BluetoothDevice) {
             } catch(e:NoDataException){
                 e.printStackTrace()
                 "!DATA"
-            }finally {
-                // Close any resources if needed
             }
         }
     }
@@ -193,13 +185,9 @@ class BluetoothClient(private val device: BluetoothDevice) {
             } catch(e:NoDataException){
                 e.printStackTrace()
                 "!DATA"
-            }finally {
-                // Close any resources if needed
-            }
+            } 
         }
     }
-
-
 
     suspend fun disconnect() = withContext(Dispatchers.IO) {
         try {
@@ -211,4 +199,5 @@ class BluetoothClient(private val device: BluetoothDevice) {
             e.printStackTrace()
         }
     }
-    }
+
+}

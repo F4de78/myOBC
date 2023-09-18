@@ -42,7 +42,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var address: String = ""
 
     private lateinit var mBluetoothAdapter: BluetoothAdapter
-
     private lateinit var bluetoothClient: BluetoothClient
 
     // since some value takes a lot to change or can be the same for a long time,
@@ -180,7 +179,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                     }
                 }
             }
-
         }
     }
 

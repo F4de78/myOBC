@@ -39,9 +39,7 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
     var EXTRA_DEVICE_ADDRESS = "device_address"
 
     val REQUEST_ENABLE_BT = 1000
-
     val BLUETOOTH_CODE = 1003
-
     val LOCATION_REQUEST_CODE = 1005
 
     private var bluetoothEnabled = false
@@ -141,12 +139,10 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
         val pairedDevicesArrayAdapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1)
         mNewDevicesArrayAdapter = ArrayAdapter<String>(this, android.R.layout.simple_list_item_1)
 
-
         // Find and set up the ListView for paired devices
         val pairedListView = findViewById<ListView>(R.id.bt_list_p)
         pairedListView.adapter = pairedDevicesArrayAdapter
         pairedListView.onItemClickListener = mDeviceClickListener
-
 
         // Find and set up the ListView for newly discovered devices
         val newDevicesListView = findViewById<ListView>(R.id.bt_list_d)
@@ -181,8 +177,6 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun doDiscovery() {
-        Log.d(TAG, "doDiscovery()")
-
         progress.visibility = View.VISIBLE
 
         // If we're already discovering, stop it
@@ -230,10 +224,8 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
 
     override fun onDestroy() {
         super.onDestroy()
-
         // Make sure we're not doing discovery anymore
         mBtAdapter.cancelDiscovery()
-
         // Unregister broadcast listeners
         unregisterReceiver(mReceiver)
     }
@@ -257,6 +249,7 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
 
             // Set result and finish this Activity
             setResult(RESULT_OK, intent)
+            start_bt.isEnabled = true
             finish()
         }
 
@@ -279,7 +272,7 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
                     )
                 }
                 // When discovery is finished, change the Activity title
-                start_bt.isEnabled = true
+                //start_bt.isEnabled = true
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED == action) {
                 progress.visibility = View.GONE
                 start_bt.isEnabled = true
@@ -308,6 +301,7 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
 
+    @RequiresApi(Build.VERSION_CODES.S)
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -346,7 +340,6 @@ class BluetoothActivity : AppCompatActivity(), View.OnClickListener {
             R.id.bt_stop->{
                 mBtAdapter.cancelDiscovery()
                 progress.visibility = View.GONE
-                //start_bt.isEnabled = false
             }
         }
     }
