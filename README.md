@@ -25,4 +25,5 @@ The [report](md-report.pdf) that I wrote for the exam can be used as some kind o
 For the communication with the ECU I used [kotlin-obd-api](https://github.com/eltonvs/kotlin-obd-api) and for the debugging, I used [ELM327-emulator](https://github.com/Ircama/ELM327-emulator).
 Big thanks to the creators and contributors of those projects!
 
-
+## License
+This project is under the MIT License, see the [LICENSE](LICENSE) file for details.
