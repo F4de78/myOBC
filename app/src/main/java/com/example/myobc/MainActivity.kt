@@ -31,6 +31,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     //used for dynamically change menu entry title
     var menu: Menu? = null
     //displays gauges
+    private lateinit var logging_status: TextView
     private lateinit var connection_status: TextView
     private lateinit var speed_display: TextView
     private lateinit var RPM_display: TextView
@@ -73,6 +74,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         //texts and display setup
+        logging_status = findViewById<TextView>(R.id.logging_indicator)
         connection_status = findViewById<TextView>(R.id.connection_indicator)
         speed_display = findViewById<TextView>(R.id.speed_display)
         RPM_display = findViewById<TextView>(R.id.RPM_display)
@@ -119,6 +121,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                         )
                         file.makeHeader()
                         log = true
+                        logging_status.text = "Logging..."
                     }catch(e:Exception){
                         Toast.makeText(this,"Error: $e",Toast.LENGTH_LONG).show()
                     }
@@ -126,6 +129,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 }else{
                     menu?.findItem(R.id.rec)?.title = "Start logging";
                     log = false
+                    logging_status.text = "Not logging"
                     Toast.makeText(this,"Stop logging\nFile saved in ${file.path}" +
                             ".",Toast.LENGTH_LONG).show()
                 }
